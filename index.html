@@ -40,7 +40,8 @@ html,body{margin:0;height:100%;position:fixed;inset:0;overscroll-behavior:none;-
 #card .stars i.off{color:#cbbfa8;text-shadow:none}
 #card .v{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:17px;line-height:1.35;margin:6px 0 2px;color:#2b1a10}
 #card .ref{font-weight:bold;color:#7a4a12;font-size:15px;margin-bottom:10px}
-#card .kjv{font-size:11px;color:#8a7a62;letter-spacing:1px}
+#card .ver{font-size:11px;color:#8a7a62;letter-spacing:1px}
+#card .credit{font-size:9px;line-height:1.25;color:#8a7a62;margin:8px auto 0;max-width:440px}
 #card .row{display:flex;gap:12px;justify-content:center}
 #card .btn{position:static}
 #fade{position:fixed;inset:0;background:#000;opacity:1;z-index:8;pointer-events:auto;transition:opacity .5s ease}
@@ -197,12 +198,15 @@ let fading=true;
 function fadeIn(){FADE.style.opacity='0';setTimeout(()=>{fading=false;FADE.style.pointerEvents='none'},500)}
 function go(S,arg){if(fading&&G.scene)return;fading=true;FADE.style.pointerEvents='auto';FADE.style.opacity='1';hideCard();
  setTimeout(()=>{try{clearUI();G.fx=[];G.keys={};G.ptr.down=false;G.scene=S(arg);G.scene.t=0;G.scene.init&&G.scene.init()}catch(e){window.__showErr&&__showErr(e.message);console.error(e)}fadeIn()},G.scene?500:50)}
-// level-complete card with KJV verse
+// level-complete card with NIrV verse
+const NIRV_NOTICE='Scripture quotations taken from The Holy Bible, New International Reader\'s Version®, NIrV® Copyright © 1995, 1996, 1998, 2014 by Biblica, Inc.® Used by permission. All rights reserved worldwide.';
 function stars(n){let s='';for(let i=0;i<3;i++)s+='<i class="'+(i<n?'':'off')+'" style="animation-delay:'+(.25+i*.18)+'s">★</i>';return s}
 function card(o){const inn=CARD.querySelector('.in');inn.innerHTML=(o.title?'<h2>'+o.title+'</h2>':'')+(o.stars!=null?'<div class="stars">'+stars(o.stars)+'</div>':'')+(o.sub?'<div style="font-weight:bold;font-size:14px;color:#5a4a3a">'+o.sub+'</div>':'')+
- '<div class="v">“'+o.verse+'”</div><div class="ref">'+o.ref+' <span class="kjv">KJV</span></div><div class="row"></div>';
+ '<div class="v">“'+o.verse+'”</div><div class="ref">'+o.ref+' <span class="ver">(NIrV)</span></div><div class="row"></div>'+(o.credit?'<div class="credit">'+o.credit+'</div>':'');
  const row=inn.querySelector('.row');(o.btns||[]).forEach((b,i)=>{const e=btn(b.label,b.cls||'green',{},()=>{if(fading)return;b.fn()});row.appendChild(e)});
- cap('');CARD.classList.add('on');G.paused=true;Snd.play(o.sfx||'win');if(G.auto&&o.btns&&o.btns.length){const b=o.btns[o.btns.length-1];setTimeout(()=>{if(CARD.classList.contains('on'))b.fn()},1500)}}
+ cap('');CARD.classList.add('on');fitCard(inn);G.paused=true;Snd.play(o.sfx||'win');if(G.auto&&o.btns&&o.btns.length){const b=o.btns[o.btns.length-1];setTimeout(()=>{if(CARD.classList.contains('on'))b.fn()},1500)}}
+function fitCard(inn){const v=inn.querySelector('.v');if(!v)return;let f=parseFloat(getComputedStyle(v).fontSize);v.style.fontSize='';f=parseFloat(getComputedStyle(v).fontSize);while(inn.scrollHeight>inn.clientHeight+1&&f>10.5){f-=.5;v.style.fontSize=f+'px';v.style.lineHeight='1.28'}}
+addEventListener('resize',()=>{if(CARD.classList.contains('on'))fitCard(CARD.querySelector('.in'))});
 function hideCard(){CARD.classList.remove('on');G.paused=false}
 function levelDone(i,starsN,dl){const L=LEVELS[i];const best=+(store.get(GAME_ID+'S'+i)||0);if(starsN>best)store.set(GAME_ID+'S'+i,starsN);
  const un=+(store.get(GAME_ID+'Unl')||0);if(i+1>un)store.set(GAME_ID+'Unl',i+1);
@@ -345,7 +349,7 @@ function HugScene(){const S={name:'finale',bs:[],n:0,hug:0,
  tap(x,y){if(this.done)return;const b=this.bs.find(b=>!b.on&&Math.abs(b.x-x)<20&&y>90);if(!b)return;b.on=1;this.n++;Snd.play('good');burst(b.x,130,12);floatTxt(b.s==='jacob'?'My son! ♥':'Forgive us! ♥',b.x,96);this.upd();cap('');
   if(this.n>=4){this.done=.01;Snd.play('chime');cap('');
    setTimeout(()=>{if(G.scene===this){fullBurst();cap('God meant it for good! 💛')}},1600);
-   setTimeout(()=>{if(G.scene===this)card({title:'God meant it for good! 🌈',sub:'You finished Joseph’s Big Dream!',verse:'But as for you, ye thought evil against me; but God meant it unto good, to bring to pass, as it is this day, to save much people alive.',ref:'Genesis 50:20',btns:[{label:'🏠 Home',cls:'cream',fn:()=>go(TitleScene)},{label:'↻ Play Again',cls:'green',fn:()=>go(LEVELS[0].intro)}],sfx:'fanfare'})},5200)}},
+   setTimeout(()=>{if(G.scene===this)card({title:'God meant it for good! 🌈',sub:'You finished Joseph’s Big Dream!',verse:'You planned to harm me. But God planned it for good. He planned to do what is now being done. He wanted to save many lives.',ref:'Genesis 50:20',btns:[{label:'🏠 Home',cls:'cream',fn:()=>go(TitleScene)},{label:'↻ Play Again',cls:'green',fn:()=>go(LEVELS[0].intro)}],credit:NIRV_NOTICE,sfx:'fanfare'})},5200)}},
  update(dt){this.bs.forEach((b,k)=>{if(b.on){const tx=G.W*.3+12+this.bs.filter(c=>c.on).indexOf(b)*16;b.x=lerp(b.x,tx,dt*2.5)}});if(this.done){this.done+=dt;this.hug=clamp((this.done-.8)/1.2,0,1);celebrate(dt)}},
  auto(dt){this.ac=(this.ac||0)+dt;if(this.ac<.7)return;this.ac=0;const b=this.bs.find(b=>!b.on);if(b)this.tap(b.x,140)},
  draw(){D.bg('bg_palace',null,{dy:.4});warm(this.t,.12);
@@ -357,17 +361,17 @@ function HugScene(){const S={name:'finale',bs:[],n:0,hug:0,
 const pg=(text,drawFn)=>({text,draw:drawFn});
 const bros=(t,x0,f)=>{['bro1','bro2','bro3'].forEach((s,i)=>guy(s,x0+i*30,178,s==='bro3'?64:76,{f:f||-1,ph:i}))};
 const LEVELS=[
- {name:'Coat of Many Colours',scene:CoatScene,ref:'Genesis 37:3',done:'You stitched the coat!',verse:'Now Israel loved Joseph more than all his children, because he was the son of his old age: and he made him a coat of many colours.',
+ {name:'Coat of Many Colours',scene:CoatScene,ref:'Genesis 37:3',done:'You stitched the coat!',verse:'Israel loved Joseph more than any of his other sons. That’s because Joseph had been born to him when he was old. Israel made him a beautiful robe.',
   intro:()=>Story([pg('Jacob had twelve sons. He loved young Joseph very much.',t=>{D.bg('bg_camp',null,{dy:.4});warm(t);guy('jacob',G.W*.38,176,98);guy('jo',G.W*.6,176,76,{f:-1});D.vig(.3)}),
    pg('Jacob made Joseph a special coat of many colours! Help catch the bright patches.',t=>{D.bg('bg_camp',null,{dy:.4});warm(t);for(let i=0;i<6;i++)D.spr('p'+i,G.W*.2+i*G.W*.12,50+Math.sin(t*2+i)*6,18,{ay:.5,rot:Math.sin(t+i)*.3});guy('jo',G.W/2,176,92,{glow:'rgba(255,240,170,.7)',gb:8});D.vig(.3)})],CoatScene)},
- {name:'Out of the Pit',scene:PitScene,ref:'Genesis 37:24',done:'Joseph is out of the pit!',verse:'And they took him, and cast him into a pit: and the pit was empty, there was no water in it.',
+ {name:'Out of the Pit',scene:PitScene,ref:'Genesis 37:24',done:'Joseph is out of the pit!',verse:'And they threw him into the well. The well was empty. There wasn’t any water in it.',
   intro:()=>Story([pg('Joseph dreamed his family would bow to him. His brothers grew jealous and grumpy.',t=>{D.bg('bg_camp',null,{dy:.4});guy('jo',G.W*.24,176,74);bros(t,G.W*.58);D.vig(.3)}),
    pg('The brothers threw Joseph into an empty pit! Help him hop up the ledges.',t=>{D.bg('bg_pit',null,{zoom:1.1,dy:.3});godRays(t,G.W*.5,.08);guy('jump',G.W/2,172,64,{});D.vig(.35)})],PitScene)},
- {name:"Pharaoh's Dreams",scene:DreamScene,ref:'Genesis 41:25',done:'You explained the dreams!',verse:'And Joseph said unto Pharaoh, The dream of Pharaoh is one: God hath shewed Pharaoh what he is about to do.',
+ {name:"Pharaoh's Dreams",scene:DreamScene,ref:'Genesis 41:25',done:'You explained the dreams!',verse:'Then Joseph said to Pharaoh, “Both of Pharaoh’s dreams have the same meaning. God has shown Pharaoh what he is about to do.”',
   intro:()=>Story([pg('Traders with camels pulled Joseph out and took him far away to Egypt.',t=>{D.bg('bg_traders',null,{dy:.5,zoom:1+t*.01});warm(t);D.vig(.3)}),
    pg('One night Pharaoh dreamed of seven fat cows, seven thin cows, and full and thin grain.',t=>{D.bg('bg_dream',null,{dy:.4,zoom:1+t*.01});motes(t,'#cfe0ff');D.vig(.3)}),
    pg('God helped Joseph explain the dreams. Match the dream pictures!',t=>{D.bg('bg_palace',null,{dy:.4});warm(t);guy('pharaoh',G.W*.32,176,96);guy('gov',G.W*.66,176,88,{f:-1});D.vig(.3)})],DreamScene)},
- {name:'Grain for the Famine',scene:GrainScene,ref:'Genesis 41:49',done:'The storehouses are full!',verse:'And Joseph gathered corn as the sand of the sea, very much, until he left numbering; for it was without number.',
+ {name:'Grain for the Famine',scene:GrainScene,ref:'Genesis 41:49',done:'The storehouses are full!',verse:'Joseph stored up huge amounts of grain. There was as much of it as sand by the sea. There was so much grain it couldn’t be measured. So Joseph stopped keeping records of it.',
   intro:()=>Story([pg('Seven good years, then seven hungry years were coming. Pharaoh put Joseph in charge of Egypt!',t=>{D.bg('bg_palace',null,{dy:.4});warm(t);guy('pharaoh',G.W*.62,176,96,{f:-1});guy('gov',G.W*.38,176,88,{glow:'rgba(255,240,170,.7)',gb:8});D.vig(.3)}),
    pg('Gather the grain into the storehouses, then share it with hungry people.',t=>{D.bg('bg_granary',null,{dy:.4});warm(t);guy('govsack',G.W*.3,176,86);D.spr('wheat',G.W*.6,176,34);D.spr('sack',G.W*.72,176,26);D.vig(.3)})],GrainScene)}
 ];
